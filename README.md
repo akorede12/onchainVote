@@ -27,12 +27,7 @@ This is a Next.js dapp that allows users to interact with a smart contract deplo
 
 ## Smart Contract
 
-The smart contract used by this dapp can be found in the `contracts` directory. It was written in Solidity and compiled using the `solc` compiler.
-
-## Acknowledgements
-
-This project was inspired by my will to complete 1 blockchain project every month of the year 2023, this
-is suppossed to be my project for the month of january, however this is May, things didn't go exactly as planned but we move.
+The smart contract used by this dapp can be found in the `contracts` directory. It was written in Solidity and compiled using the `solc` compiler. By ABOABA AKOREDE.
 
 ## Smart Contract Summary
 
@@ -43,6 +38,11 @@ The contract has several state variables, including the address of the owner of 
 The contract has several functions, including a constructor that sets the initial values for the contract, a function for setting the election details, a function for getting the election details, a function for adding allowed voters, a function for registering voters, a function for viewing the list of voters, a function for unregistering voters, a function for adding vote options, a function for viewing the list of vote options, a function for casting votes, a function for getting the list of voters and the votes they cast, and a function for getting the vote count for a specific vote option.
 
 The contract also uses a library called "checker" to check the validity of vote options and get the index of a vote option in the list of vote options.
+
+## Acknowledgements
+
+This project was inspired by my will to complete 1 blockchain project every month of the year 2023, this
+is suppossed to be my project for the month of january, however this is May, things didn't go exactly as planned but we move.
 
 ## License
 
