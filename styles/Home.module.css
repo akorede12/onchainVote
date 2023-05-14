@@ -28,7 +28,7 @@
   flex-grow: 1;
 }
 
-.title a {
+/* .title a {
   color: #0070f3;
   text-decoration: none;
 }
@@ -48,7 +48,7 @@
 .title,
 .description {
   text-align: center;
-}
+} */
 
 .description {
   margin: 4rem 0;
@@ -125,5 +125,22 @@
   }
   .logo img {
     filter: invert(1);
+  }
+  .drawer {
+    width: 240;
+  }
+  .root {
+    display: flex;
+  }
+  .active{
+    background:#f4f4f4;
+  }
+  .page{
+    background: '#f9f9f9';
+    width: '100%';
+    padding: 24;
+  }
+  .title{
+    padding: 24;
   }
 }

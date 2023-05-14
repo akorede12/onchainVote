@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "C:\\Users\\FARAJ\\Desktop\\Ak's code\\January Project\\onchain-vote\\contracts\\checker.sol": {
-      "lastModificationDate": 1675137282880,
-      "contentHash": "84be8c2ceb608f87e8ec10a1d292fdc7",
+      "lastModificationDate": 1680249439047,
+      "contentHash": "2b6bdcfda5a377e73c26e7fb0f261059",
       "sourceName": "contracts/checker.sol",
       "solcConfig": {
         "version": "0.8.17",
@@ -37,8 +37,8 @@
       ]
     },
     "C:\\Users\\FARAJ\\Desktop\\Ak's code\\January Project\\onchain-vote\\contracts\\voting.sol": {
-      "lastModificationDate": 1675137686113,
-      "contentHash": "771034a6a2ac78c2622a55f0856cb45e",
+      "lastModificationDate": 1683173929037,
+      "contentHash": "40ae9ac6d440182a08f6c66ee9d38f8b",
       "sourceName": "contracts/voting.sol",
       "solcConfig": {
         "version": "0.8.17",
@@ -74,8 +74,8 @@
       ]
     },
     "C:\\Users\\FARAJ\\Desktop\\Ak's code\\January Project\\onchain-vote\\contracts\\election.sol": {
-      "lastModificationDate": 1675137492392,
-      "contentHash": "4c19e2e97c3b8c83efa3da4aab5bf496",
+      "lastModificationDate": 1683781349560,
+      "contentHash": "e5f717742bdcd156e57f19f056a465e4",
       "sourceName": "contracts/election.sol",
       "solcConfig": {
         "version": "0.8.17",

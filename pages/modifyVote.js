@@ -3,7 +3,7 @@ import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
 import styles from "../styles/Home.module.css";
-import { Box } from "@mui/material";
+import { Box, CardContent, Grid } from "@mui/material";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
@@ -20,8 +20,16 @@ import FormControl from "@mui/material/FormControl";
 import FormLabel from "@mui/material/FormLabel";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import { MuiChipsInput } from "mui-chips-input";
-// wagmi/ ethers/ contract
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+import Card from "@mui/material/Card";
+import Chip from "@mui/material/Chip";
+import Stack from "@mui/material/Stack";
+import Head from "next/head";
+import {
+  LastDeployedElection,
+  AllElections,
+  ViewElectionAddress,
+  GetElectionCount,
+} from "../components/elections";
 import { ethers } from "ethers";
 import { ElectionContract } from "../config";
 import Electionabi from "../artifacts/contracts/election.sol/Election.json";
@@ -33,17 +41,10 @@ import {
   useAccount,
   useSigner,
 } from "wagmi";
-// import { useAccount } from "wagmi";
-import {
-  LastDeployedElection,
-  AllElections,
-  ViewElectionAddress,
-  GetElectionCount,
-} from "../components/elections";
-import Head from "next/head";
 import Stepper from "@mui/material/Stepper";
 import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
+
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -51,107 +52,68 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import ALert from "@mui/material/Alert";
-import Grid from "@mui/material/Grid";
+import Divider from "@mui/material/Divider";
 import ButtonGroup from "@mui/material/ButtonGroup";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
 
-export default function Create() {
-  const router = useRouter();
+export default function ModifyVote() {
+  // Modify Elections
   // Mui stepper.
   const [activeStep, setActiveStep] = useState(0);
 
   // Contract interactions
-  const [votingContractAddress, setVotingContractAddress] = useState("");
-  const [electionName, setElectionName] = useState("");
-  const [newElectionName, setNewElectionName] = useState("");
-  const [electionCreator, setElectionCreator] = useState("");
+
+  const router = useRouter();
+  const { Address } = router.query;
+  const formAddress = ethers.utils.getAddress(Address);
   const [errorMessage, setErrorMessage] = useState("");
-  const [errorMessage2, setErrorMessage2] = useState("");
+
+  const [votingContractAddress, setVotingContractAddress] = useState("");
 
   const { data: signer } = useSigner();
 
-  const provider = new ethers.providers.JsonRpcProvider();
-
   const { address } = useAccount();
 
-  // create  a new election
-  async function createNewElection() {
-    // If the User typed in an election name
-    if (electionName.trim() === "") {
-      setErrorMessage2(
+  const [modElectionName, setModElectionName] = useState("");
+
+  const provider = new ethers.providers.JsonRpcProvider();
+
+  // create modify election
+  async function modifyElection() {
+    if (modElectionName.trim() === "") {
+      setErrorMessage(
         "Election Name required!, Please input a name for the Eleaction"
       );
       return;
     }
 
     // Reset error message if there was a previous one
-    setErrorMessage2("");
+    setErrorMessage("");
 
-    const formattedName = ethers.utils.formatBytes32String(electionName);
+    const formattedName = ethers.utils.formatBytes32String(modElectionName);
 
     const contract = new ethers.Contract(
-      ElectionContract,
-      Electionabi.abi,
+      votingContractAddress,
+      Votingabi.abi,
       signer
     );
-    console.log(electionName, formattedName);
+    console.log(modElectionName, formattedName);
     try {
-      // const formAddress = ethers.utils.getAddress(Address);
-      const tx = await contract.createElection(formattedName, {
+      const tx = await contract.setElectionDetails(formattedName, {
         from: address,
       });
-      // emit newElectionCreated( electionCount, _electionName, electionCreator, _electionAddress);
-      // Emit newElectionCreated Event
-      const rc = await tx.wait();
-      const event = rc.events.find(
-        (event) => event.event === "newElectionCreated"
-      );
-      const [count, name, creator, address2] = event.args;
-      console.log(count.toNumber(), name, creator, address2);
-      setVotingContractAddress(ethers.utils.getAddress(address2));
-      setNewElectionName(ethers.utils.parseBytes32String(name));
-      setElectionCreator(creator);
+      await tx.wait();
       // Call the electionInfo function after transaction has been successful
+      await electionInfo();
     } catch (error) {
       console.error(error);
-      setErrorMessage2("An error occurred while creating the election.");
+      setErrorMessage("An error occurred while creating the election.");
     }
   }
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    createNewElection();
+    modifyElection();
   };
-
-  //Get Election Details
-
-  // const electionInfo = async () => {
-  //   const ethersVote = new ethers.Contract(
-  //     votingContractAddress,
-  //     Votingabi.abi,
-  //     provider
-  //   );
-
-  //   const details = await ethersVote.getElectionDetails();
-  //   console.log(details); // log the details object
-  //   const name = details[0];
-  //   const formatName = ethers.utils.parseBytes32String(name);
-  //   console.log(name, formatName);
-  //   setNewElectionName(formatName.toString());
-  //   setElectionCreator(details[1]);
-  //   // setVotingContractAddress(address);
-  // };
-
-  // useEffect(() => {
-  //   const timeoutId = setTimeout(() => {
-  //     electionInfo();
-  //   }, 7000);
-
-  //   return () => {
-  //     clearTimeout(timeoutId);
-  //   };
-  // }, [createNewElection]);
 
   // Add voters
 
@@ -167,8 +129,6 @@ export default function Create() {
       e.preventDefault();
     }
     console.log(voterChips);
-    // const address = await LastDeployedElection();
-
     const ethersVote = new ethers.Contract(
       votingContractAddress,
       Votingabi.abi,
@@ -176,27 +136,13 @@ export default function Create() {
     );
 
     try {
-      const tx = await ethersVote.registerVoter(voterChips);
+      const tx = await await ethersVote.registerVoter(voterChips);
       await tx.wait();
       // Call the viewVoters function after transaction has been successful
       await viewVoters();
     } catch (error) {
       console.error(error);
     }
-  };
-
-  // view voters
-
-  const [allowedVoters, setAllowedVoters] = useState([]);
-
-  const viewVoters = async () => {
-    const ethersVote = new ethers.Contract(
-      votingContractAddress,
-      Votingabi.abi,
-      provider
-    );
-    const getVoters = await ethersVote.viewVoters();
-    setAllowedVoters(getVoters);
   };
 
   // Add vote options
@@ -208,7 +154,6 @@ export default function Create() {
 
   async function uploadOptions(e) {
     e.preventDefault();
-    // const address = await LastDeployedElection();
     const ethersVote = new ethers.Contract(
       votingContractAddress,
       Votingabi.abi,
@@ -227,14 +172,46 @@ export default function Create() {
     }
   }
 
+  const handleNext = () => {
+    router.push({
+      pathname: "/Election",
+      query: { Address: votingContractAddress },
+    });
+  };
+
+  // Receive Address
+  const [electionCreator, setElectionCreator] = useState();
+
+  const [newElectionName, setNewElectionName] = useState("");
+
+  const electionInfo = async () => {
+    // const address = await LastDeployedElection();
+
+    const provider = new ethers.providers.JsonRpcProvider();
+
+    // const ethersVote = new ethers.Contract(address, Votingabi.abi, provider);
+    const ethersVote = new ethers.Contract(
+      formAddress, //votingContractAddress,
+      Votingabi.abi,
+      provider
+    );
+
+    const details = await ethersVote.getElectionDetails(); // { name, creator}
+    console.log(details); // log the details object
+    const name = details[0];
+    const formatName = await ethers.utils.parseBytes32String(name);
+    console.log(name, formatName);
+    setNewElectionName(formatName.toString());
+    setElectionCreator(details[1]);
+  };
+
   // view vote options
   const [viewOptions, setViewOptions] = useState([]);
 
   async function viewVoteOptions() {
-    // const address = await LastDeployedElection();
     const provider = new ethers.providers.JsonRpcProvider();
     const ethersVote = new ethers.Contract(
-      votingContractAddress,
+      formAddress, //votingContractAddress,
       Votingabi.abi,
       provider
     );
@@ -244,47 +221,75 @@ export default function Create() {
     );
 
     setViewOptions(formatetOptions);
-    console.log(formatetOptions);
   }
 
-  const handleNext = () => {
-    if (electionName.trim() === "") {
-      setErrorMessage(
-        "You need to create an Election to proceed, go back to the first step."
-      );
-      return;
-    }
+  // Vote
+
+  const [selectedOption, setSelectedOption] = useState(null);
+
+  const [vote, setVote] = useState();
+
+  const handleVote = (option) => {
+    setVote(option);
+    setSelectedOption(option);
+    console.log(option);
+  };
+
+  async function Vote() {
+    const ethersVote = new ethers.Contract(
+      votingContractAddress,
+      Votingabi.abi,
+      signer
+    );
+    const formatVote = ethers.utils.formatBytes32String(vote);
 
     try {
-      // Reset error message if there was a previous one
-      setErrorMessage("");
-      router.push({
-        pathname: "/Election",
-        query: { Address: votingContractAddress },
-      });
+      const castVote = await ethersVote.castVote(formatVote);
+      console.log(vote);
     } catch (error) {
       console.error(error);
-      setErrorMessage("An error occurred while creating the election.");
     }
+  }
+
+  // view voters
+
+  const [allowedVoters, setAllowedVoters] = useState([]);
+
+  const viewVoters = async () => {
+    const ethersVote = new ethers.Contract(
+      formAddress, //votingContractAddress,
+      Votingabi.abi,
+      provider
+    );
+    const getVoters = await ethersVote.viewVoters();
+    setAllowedVoters(getVoters);
   };
+
+  useEffect(() => {
+    viewVoters();
+    viewVoteOptions();
+    electionInfo();
+    setVotingContractAddress(formAddress);
+  }, [formAddress]);
 
   return (
     <div>
       <Head>
-        <title>OnChain Votes - Create Elections</title>
+        <title>OnChain Votes - Vote</title>
         <meta name="description" content=" Blockchain voting made easy" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
+
       <div style={{ height: "100%", width: "100%" }}>
         <Stepper activeStep={activeStep}>
           <Step>
-            <StepLabel>Create a New Election</StepLabel>
+            <StepLabel> Modify Election</StepLabel>
           </Step>
           <Step>
             <StepLabel>Add Voters</StepLabel>
           </Step>
           <Step>
-            <StepLabel>Add Voting Options</StepLabel>
+            <StepLabel>Add Vote Options</StepLabel>
           </Step>
         </Stepper>
         <Container>
@@ -356,9 +361,8 @@ export default function Create() {
                   <Typography variant="h3" color="primary">
                     Change Election Name
                   </Typography>
-
                   <TextField
-                    onChange={(e) => setElectionName(e.target.value)}
+                    onChange={(e) => setModElectionName(e.target.value)}
                     label="New Election Name"
                     variant="outlined"
                     required
@@ -367,7 +371,7 @@ export default function Create() {
                   <br />
                   <br />
                   <Button type="submit" variant="contained">
-                    Create a New Election
+                    Change Election Name
                   </Button>
                   {errorMessage && (
                     <ALert severity="error" sx={{ mt: 2 }}>
@@ -383,7 +387,7 @@ export default function Create() {
                 color="primary"
                 onClick={() => setActiveStep(1)}
                 variant="outlined"
-                // sx={{ alignSelf: "right", alignContent: "right" }}
+                sx={{ marginLeft: "auto" }}
               >
                 Next
               </Button>
@@ -403,12 +407,11 @@ export default function Create() {
                 <br />
                 <br />
                 <Button onClick={addVoters} variant="contained">
-                  {" "}
                   Upload Voters
                 </Button>
                 <br />
+                <br />
               </Paper>
-
               <br />
               <br />
               <ButtonGroup
@@ -445,15 +448,11 @@ export default function Create() {
                 <br />
                 <br />
                 <Button onClick={uploadOptions} variant="contained">
-                  {" "}
                   Upload Vote option
                 </Button>
                 <br />
                 <br />
-
-                <br />
               </Paper>
-
               <br />
               <br />
               <ButtonGroup
@@ -479,69 +478,68 @@ export default function Create() {
           </div>
         )}
       </div>
-      <Container>
-        <Grid
-          container
-          spacing={10}
-          justifyContent="center"
-          // sx={{ display: "flex" }}
-        >
-          <Grid item md={6}>
-            <Paper sx={{ boxShadow: "none" }}>
-              <br />
-              <Typography variant="h5" color="primary" textAlign="left">
-                Voters
-              </Typography>
-              {/*Table*/}
-              <TableContainer component={Paper}>
-                <Table aria-label="Voter Table">
-                  <TableBody>
-                    {allowedVoters.map((voters, index) => (
-                      <TableRow
-                        key={index}
-                        hover
-                        style={{ cursor: "pointer" }}
-                        button
-                      >
-                        <TableCell align="left" hover role="checkbox">
-                          {voters}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Paper>
-          </Grid>
-          <Grid item md={5}>
-            <Paper sx={{ boxShadow: "none" }}>
-              <br />
-              <Typography variant="h5" color="primary" textAlign="right">
-                Vote Options
-              </Typography>
+      <br />
 
-              {/*Table*/}
-              <TableContainer component={Paper}>
-                <Table aria-label="Options Table">
-                  <TableBody>
-                    {viewOptions.map((option, index) => (
-                      <TableRow
-                        key={index}
-                        hover
-                        style={{ cursor: "pointer" }}
-                        button
-                      >
-                        <TableCell align="left" hover role="checkbox">
-                          {option}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Paper>
+      <Container>
+        <Container>
+          <Grid container spacing={10} justifyContent="center">
+            <Grid item md={6}>
+              <Paper sx={{ boxShadow: "none" }}>
+                <br />
+                <Typography variant="h5" color="primary" textAlign="left">
+                  Voters
+                </Typography>
+                {/*Table*/}
+                <TableContainer component={Paper}>
+                  <Table aria-label="Voter Table">
+                    <TableBody>
+                      {allowedVoters.map((voters, index) => (
+                        <TableRow
+                          key={index}
+                          hover
+                          style={{ cursor: "pointer" }}
+                          button
+                        >
+                          <TableCell align="left" hover role="checkbox">
+                            {voters}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Paper>
+            </Grid>
+            <Grid item md={6}>
+              <Paper sx={{ boxShadow: "none" }}>
+                <br />
+                <Typography variant="h5" color="primary" textAlign="right">
+                  Vote Options
+                </Typography>
+
+                {/*Table*/}
+                <TableContainer component={Paper}>
+                  <Table aria-label="Options Table">
+                    <TableBody>
+                      {viewOptions.map((option, index) => (
+                        <TableRow
+                          key={index}
+                          hover
+                          style={{ cursor: "pointer" }}
+                          button
+                        >
+                          <TableCell align="left" hover role="checkbox">
+                            {option}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Paper>
+            </Grid>
           </Grid>
-        </Grid>
+        </Container>
       </Container>
     </div>
   );
