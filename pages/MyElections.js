@@ -117,10 +117,10 @@ export default function Elections() {
       </Head>
       <Container>
         <Paper sx={{ boxShadow: "none" }}>
-          <Typography variant="h5" color="secondary">
+          <Typography variant="h4" color="primary">
             My Elections
           </Typography>
-          <Typography variant="p" color="primary">
+          <Typography variant="p" color="secondary">
             Number of elections created: {electionCount}
           </Typography>
 
@@ -143,7 +143,7 @@ export default function Elections() {
                       handleNext(election.Address);
                     }}
                     style={{ cursor: "pointer" }}
-                    button
+                    // button
                   >
                     <TableCell align="right">{election.ElectionId}</TableCell>
                     <TableCell align="right">{election.ElectionName}</TableCell>

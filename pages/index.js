@@ -50,11 +50,12 @@ import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
-import ALert from "@mui/material/Alert";
+import Alert from "@mui/material/Alert";
 import Grid from "@mui/material/Grid";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
+import Snackbar from "@mui/material/Snackbar";
 
 export default function Create() {
   const router = useRouter();
@@ -66,8 +67,15 @@ export default function Create() {
   const [electionName, setElectionName] = useState("");
   const [newElectionName, setNewElectionName] = useState("");
   const [electionCreator, setElectionCreator] = useState("");
+  //
   const [errorMessage, setErrorMessage] = useState("");
   const [errorMessage2, setErrorMessage2] = useState("");
+  // addVoter errors
+  const [errorMessage3, setErrorMessage3] = useState("");
+  // addVote option error
+  const [errorMessage4, setErrorMessage4] = useState("");
+  // create election success message
+  const [successMessage, setSuccessMessage] = useState("");
 
   const { data: signer } = useSigner();
 
@@ -75,12 +83,42 @@ export default function Create() {
 
   const { address } = useAccount();
 
+  // create election error snackbar controls
+  const [open, setOpen] = useState(false);
+
+  const snackbarOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = (event, reason) => {
+    if (reason === "clickaway") {
+      return;
+    }
+
+    setOpen(false);
+  };
+
+  // create election success snackbar controls
+  const [open2, setOpen2] = useState(false);
+
+  const snackbarOpen2 = () => {
+    setOpen2(true);
+  };
+
+  const handleClose2 = (event, reason) => {
+    if (reason === "clickaway") {
+      return;
+    }
+
+    setOpen(false);
+  };
+
   // create  a new election
   async function createNewElection() {
     // If the User typed in an election name
     if (electionName.trim() === "") {
       setErrorMessage2(
-        "Election Name required!, Please input a name for the Eleaction"
+        "Election Name required!, Please input a name for the Election"
       );
       return;
     }
@@ -97,12 +135,9 @@ export default function Create() {
     );
     console.log(electionName, formattedName);
     try {
-      // const formAddress = ethers.utils.getAddress(Address);
       const tx = await contract.createElection(formattedName, {
         from: address,
       });
-      // emit newElectionCreated( electionCount, _electionName, electionCreator, _electionAddress);
-      // Emit newElectionCreated Event
       const rc = await tx.wait();
       const event = rc.events.find(
         (event) => event.event === "newElectionCreated"
@@ -112,7 +147,12 @@ export default function Create() {
       setVotingContractAddress(ethers.utils.getAddress(address2));
       setNewElectionName(ethers.utils.parseBytes32String(name));
       setElectionCreator(creator);
-      // Call the electionInfo function after transaction has been successful
+      setSuccessMessage(
+        `New ${ethers.utils.parseBytes32String(
+          name
+        )} election created, add voters and options in the next screens`
+      );
+      snackbarOpen2();
     } catch (error) {
       console.error(error);
       setErrorMessage2("An error occurred while creating the election.");
@@ -124,35 +164,6 @@ export default function Create() {
     createNewElection();
   };
 
-  //Get Election Details
-
-  // const electionInfo = async () => {
-  //   const ethersVote = new ethers.Contract(
-  //     votingContractAddress,
-  //     Votingabi.abi,
-  //     provider
-  //   );
-
-  //   const details = await ethersVote.getElectionDetails();
-  //   console.log(details); // log the details object
-  //   const name = details[0];
-  //   const formatName = ethers.utils.parseBytes32String(name);
-  //   console.log(name, formatName);
-  //   setNewElectionName(formatName.toString());
-  //   setElectionCreator(details[1]);
-  //   // setVotingContractAddress(address);
-  // };
-
-  // useEffect(() => {
-  //   const timeoutId = setTimeout(() => {
-  //     electionInfo();
-  //   }, 7000);
-
-  //   return () => {
-  //     clearTimeout(timeoutId);
-  //   };
-  // }, [createNewElection]);
-
   // Add voters
 
   const [voters, setVoters] = useState([]);
@@ -163,6 +174,12 @@ export default function Create() {
   };
 
   const addVoters = async (e) => {
+    if (electionName.trim() === "") {
+      setErrorMessage3(
+        "No Election created!, create an election before adding voters"
+      );
+      return;
+    }
     if (e) {
       e.preventDefault();
     }
@@ -207,8 +224,13 @@ export default function Create() {
   };
 
   async function uploadOptions(e) {
+    if (electionName.trim() === "") {
+      setErrorMessage4(
+        "No Election created!, create an election before adding options"
+      );
+      return;
+    }
     e.preventDefault();
-    // const address = await LastDeployedElection();
     const ethersVote = new ethers.Contract(
       votingContractAddress,
       Votingabi.abi,
@@ -252,6 +274,7 @@ export default function Create() {
       setErrorMessage(
         "You need to create an Election to proceed, go back to the first step."
       );
+      snackbarOpen();
       return;
     }
 
@@ -354,7 +377,7 @@ export default function Create() {
               <Paper sx={{ boxShadow: "none" }}>
                 <form noValidate autoComplete="off" onSubmit={handleSubmit}>
                   <Typography variant="h3" color="primary">
-                    Change Election Name
+                    Enter Election Name
                   </Typography>
 
                   <TextField
@@ -369,11 +392,24 @@ export default function Create() {
                   <Button type="submit" variant="contained">
                     Create a New Election
                   </Button>
-                  {errorMessage && (
-                    <ALert severity="error" sx={{ mt: 2 }}>
-                      {errorMessage}
-                    </ALert>
+                  {errorMessage2 && (
+                    <Alert severity="error" sx={{ mt: 2 }}>
+                      {errorMessage2}
+                    </Alert>
                   )}
+                  <Snackbar
+                    open={open2}
+                    autoHideDuration={6000}
+                    onClose={handleClose2}
+                  >
+                    <Alert
+                      onClose={handleClose2}
+                      severity="success"
+                      sx={{ width: "100%" }}
+                    >
+                      {successMessage}
+                    </Alert>
+                  </Snackbar>
                 </form>
               </Paper>
               <br />
@@ -383,7 +419,6 @@ export default function Create() {
                 color="primary"
                 onClick={() => setActiveStep(1)}
                 variant="outlined"
-                // sx={{ alignSelf: "right", alignContent: "right" }}
               >
                 Next
               </Button>
@@ -406,6 +441,11 @@ export default function Create() {
                   {" "}
                   Upload Voters
                 </Button>
+                {errorMessage3 && (
+                  <Alert severity="error" sx={{ mt: 2 }}>
+                    {errorMessage3}
+                  </Alert>
+                )}
                 <br />
               </Paper>
 
@@ -448,6 +488,11 @@ export default function Create() {
                   {" "}
                   Upload Vote option
                 </Button>
+                {errorMessage4 && (
+                  <Alert severity="error" sx={{ mt: 2 }}>
+                    {errorMessage4}
+                  </Alert>
+                )}
                 <br />
                 <br />
 
@@ -473,6 +518,19 @@ export default function Create() {
                 >
                   Go to Election Menu
                 </Button>
+                <Snackbar
+                  open={open}
+                  autoHideDuration={6000}
+                  onClose={handleClose}
+                >
+                  <Alert
+                    onClose={handleClose}
+                    severity="error"
+                    sx={{ width: "100%" }}
+                  >
+                    {errorMessage}
+                  </Alert>
+                </Snackbar>
               </ButtonGroup>
               <br />
             </Box>
@@ -493,24 +551,30 @@ export default function Create() {
                 Voters
               </Typography>
               {/*Table*/}
-              <TableContainer component={Paper}>
-                <Table aria-label="Voter Table">
-                  <TableBody>
-                    {allowedVoters.map((voters, index) => (
-                      <TableRow
-                        key={index}
-                        hover
-                        style={{ cursor: "pointer" }}
-                        button
-                      >
-                        <TableCell align="left" hover role="checkbox">
-                          {voters}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+              {allowedVoters.length === 0 ? (
+                <Typography variant="h6" textAlign="left" color="grey">
+                  No voters Added
+                </Typography>
+              ) : (
+                <TableContainer component={Paper}>
+                  <Table aria-label="Voter Table">
+                    <TableBody>
+                      {allowedVoters.map((voters, index) => (
+                        <TableRow
+                          key={index}
+                          hover
+                          style={{ cursor: "pointer" }}
+                          button
+                        >
+                          <TableCell align="left" hover role="checkbox">
+                            {voters}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
             </Paper>
           </Grid>
           <Grid item md={5}>
@@ -519,26 +583,30 @@ export default function Create() {
               <Typography variant="h5" color="primary" textAlign="right">
                 Vote Options
               </Typography>
-
-              {/*Table*/}
-              <TableContainer component={Paper}>
-                <Table aria-label="Options Table">
-                  <TableBody>
-                    {viewOptions.map((option, index) => (
-                      <TableRow
-                        key={index}
-                        hover
-                        style={{ cursor: "pointer" }}
-                        button
-                      >
-                        <TableCell align="left" hover role="checkbox">
-                          {option}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+              {viewOptions.length === 0 ? (
+                <Typography variant="h6" textAlign="right" color="grey">
+                  No Options Added
+                </Typography>
+              ) : (
+                <TableContainer component={Paper}>
+                  <Table aria-label="Options Table">
+                    <TableBody>
+                      {viewOptions.map((option, index) => (
+                        <TableRow
+                          key={index}
+                          hover
+                          style={{ cursor: "pointer" }}
+                          button
+                        >
+                          <TableCell align="right" hover role="checkbox">
+                            {option}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
             </Paper>
           </Grid>
         </Grid>

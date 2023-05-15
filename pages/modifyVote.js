@@ -65,7 +65,10 @@ export default function ModifyVote() {
   const router = useRouter();
   const { Address } = router.query;
   const formAddress = ethers.utils.getAddress(Address);
+  //
   const [errorMessage, setErrorMessage] = useState("");
+  // error message for addVoters
+  const [errorMessage2, setErrorMessage2] = useState("");
 
   const [votingContractAddress, setVotingContractAddress] = useState("");
 
@@ -117,7 +120,6 @@ export default function ModifyVote() {
 
   // Add voters
 
-  const [voters, setVoters] = useState([]);
   const [voterChips, setVoterChips] = useState([]);
 
   const handleChange = (voterChips) => {
@@ -141,6 +143,10 @@ export default function ModifyVote() {
       // Call the viewVoters function after transaction has been successful
       await viewVoters();
     } catch (error) {
+      if (error.message.includes("Caller is not authorized.")) {
+        setErrorMessage2("You do not have permission to add voters");
+        console.log(error.message);
+      }
       console.error(error);
     }
   };
@@ -221,34 +227,6 @@ export default function ModifyVote() {
     );
 
     setViewOptions(formatetOptions);
-  }
-
-  // Vote
-
-  const [selectedOption, setSelectedOption] = useState(null);
-
-  const [vote, setVote] = useState();
-
-  const handleVote = (option) => {
-    setVote(option);
-    setSelectedOption(option);
-    console.log(option);
-  };
-
-  async function Vote() {
-    const ethersVote = new ethers.Contract(
-      votingContractAddress,
-      Votingabi.abi,
-      signer
-    );
-    const formatVote = ethers.utils.formatBytes32String(vote);
-
-    try {
-      const castVote = await ethersVote.castVote(formatVote);
-      console.log(vote);
-    } catch (error) {
-      console.error(error);
-    }
   }
 
   // view voters
@@ -400,7 +378,7 @@ export default function ModifyVote() {
             <Box component="div" sx={{ textAlign: "center" }}>
               <Paper sx={{ boxShadow: "none" }}>
                 <Typography variant="h3" color="primary">
-                  Add Voters to Election{" "}
+                  Add Voters to Election
                 </Typography>
                 <br />
                 <MuiChipsInput value={voterChips} onChange={handleChange} />
@@ -409,6 +387,11 @@ export default function ModifyVote() {
                 <Button onClick={addVoters} variant="contained">
                   Upload Voters
                 </Button>
+                {errorMessage2 && (
+                  <ALert severity="error" sx={{ mt: 2 }}>
+                    {errorMessage2}
+                  </ALert>
+                )}
                 <br />
                 <br />
               </Paper>
@@ -490,24 +473,30 @@ export default function ModifyVote() {
                   Voters
                 </Typography>
                 {/*Table*/}
-                <TableContainer component={Paper}>
-                  <Table aria-label="Voter Table">
-                    <TableBody>
-                      {allowedVoters.map((voters, index) => (
-                        <TableRow
-                          key={index}
-                          hover
-                          style={{ cursor: "pointer" }}
-                          button
-                        >
-                          <TableCell align="left" hover role="checkbox">
-                            {voters}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                {allowedVoters.length === 0 ? (
+                  <Typography variant="h6" textAlign="left" color="grey">
+                    No voters Added
+                  </Typography>
+                ) : (
+                  <TableContainer component={Paper}>
+                    <Table aria-label="Voter Table">
+                      <TableBody>
+                        {allowedVoters.map((voters, index) => (
+                          <TableRow
+                            key={index}
+                            hover
+                            style={{ cursor: "pointer" }}
+                            button
+                          >
+                            <TableCell align="left" hover role="checkbox">
+                              {voters}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
               </Paper>
             </Grid>
             <Grid item md={6}>
@@ -518,24 +507,30 @@ export default function ModifyVote() {
                 </Typography>
 
                 {/*Table*/}
-                <TableContainer component={Paper}>
-                  <Table aria-label="Options Table">
-                    <TableBody>
-                      {viewOptions.map((option, index) => (
-                        <TableRow
-                          key={index}
-                          hover
-                          style={{ cursor: "pointer" }}
-                          button
-                        >
-                          <TableCell align="left" hover role="checkbox">
-                            {option}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                {viewOptions.length === 0 ? (
+                  <Typography variant="h6" textAlign="right" color="grey">
+                    No Options Added
+                  </Typography>
+                ) : (
+                  <TableContainer component={Paper}>
+                    <Table aria-label="Options Table">
+                      <TableBody>
+                        {viewOptions.map((option, index) => (
+                          <TableRow
+                            key={index}
+                            hover
+                            style={{ cursor: "pointer" }}
+                            button
+                          >
+                            <TableCell align="right" hover role="checkbox">
+                              {option}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
               </Paper>
             </Grid>
           </Grid>

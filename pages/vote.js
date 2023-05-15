@@ -48,7 +48,7 @@ import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
-import ALert from "@mui/material/Alert";
+import Alert from "@mui/material/Alert";
 import Grid from "@mui/material/Grid";
 
 export default function Vote() {
@@ -61,6 +61,8 @@ export default function Vote() {
 
   const [votingContractAddress, setVotingContractAddress] = useState("");
   const [newElectionName, setNewElectionName] = useState("");
+
+  const [errorMessage, setErrorMessage] = useState("");
 
   const electionInfo = async () => {
     const provider = new ethers.providers.JsonRpcProvider();
@@ -120,19 +122,38 @@ export default function Vote() {
     console.log(option);
   };
 
+  const [errorMessage3, setErrorMessage3] = useState("");
+
   async function Vote() {
+    if (!vote) {
+      // vote.trim() === ""
+      setErrorMessage3(
+        "Select an option, before clicking the CAST VOTE button"
+      );
+      return;
+    }
     const ethersVote = new ethers.Contract(
       formAddress, //votingContractAddress,
       Votingabi.abi,
       signer
     );
+
     const formatVote = ethers.utils.formatBytes32String(vote);
 
     try {
       const castVote = await ethersVote.castVote(formatVote);
       console.log(vote);
     } catch (error) {
-      console.error(error);
+      if (error.message.includes("Voter has already voted")) {
+        // (error.code === "CALL_EXCEPTION") {
+        setErrorMessage("You have already voted");
+        console.log(error.message);
+      } else if (error.message.includes("voter is not registered.")) {
+        setErrorMessage("voter is not registered.");
+        console.log("voter is not registered.");
+      } else {
+        console.error(error);
+      }
     }
   }
 
@@ -234,30 +255,60 @@ export default function Vote() {
           Cast Your Vote
         </Typography>
         <br />
-        <Typography variant="p" color="primary">
+        <Typography variant="p">
           To vote for your preferred option, select the option below then click
-          the CAST VOTE button.(You can only vote once)
+          the{" "}
+          <Typography variant="h7" color="primary">
+            CAST VOTE
+          </Typography>{" "}
+          button.(You can only vote once)
         </Typography>
         <br />
         <br />
-        <Stack direction="row" spacing={5}>
-          {viewOptions.map((option, index) => {
-            const isOptionSelected = selectedOption === option;
-            return (
-              <ListItem key={index}>
-                <Chip
-                  label={option}
-                  onClick={() => handleVote(option)}
-                  color={isOptionSelected ? "primary" : "default"}
-                />
-              </ListItem>
-            );
-          })}
-        </Stack>
+        {viewOptions.length === 0 ? (
+          <Typography variant="h6" textAlign="left" color="grey">
+            No Options Added
+          </Typography>
+        ) : (
+          <Container>
+            <Typography variant="h7" color="primary">
+              Vote Options
+            </Typography>
+            <br />
+            <br />
+            <Stack direction="row" spacing={5}>
+              <br />
+              {viewOptions.map((option, index) => {
+                const isOptionSelected = selectedOption === option;
+                return (
+                  <ListItem key={index}>
+                    <Chip
+                      label={option}
+                      onClick={() => handleVote(option)}
+                      color={isOptionSelected ? "primary" : "default"}
+                    />
+                  </ListItem>
+                );
+              })}
+            </Stack>
+          </Container>
+        )}
+
         <br />
         <Button variant="outlined" onClick={Vote}>
           Cast Vote
         </Button>
+        {errorMessage3 && (
+          <Alert severity="error" sx={{ mt: 2 }}>
+            {errorMessage3}
+          </Alert>
+        )}
+        {errorMessage && (
+          <Alert severity="error" sx={{ mt: 2 }}>
+            {errorMessage}
+          </Alert>
+        )}
+
         <br />
 
         <br />
@@ -269,24 +320,30 @@ export default function Vote() {
               Voters
             </Typography>
             {/*Table*/}
-            <TableContainer component={Paper}>
-              <Table aria-label="Voter Table">
-                <TableBody>
-                  {allowedVoters.map((voters, index) => (
-                    <TableRow
-                      key={index}
-                      hover
-                      style={{ cursor: "pointer" }}
-                      button
-                    >
-                      <TableCell align="left" hover role="checkbox">
-                        {voters}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+            {allowedVoters.length === 0 ? (
+              <Typography variant="h6" textAlign="left" color="grey">
+                No voters Added
+              </Typography>
+            ) : (
+              <TableContainer component={Paper}>
+                <Table aria-label="Voter Table">
+                  <TableBody>
+                    {allowedVoters.map((voters, index) => (
+                      <TableRow
+                        key={index}
+                        hover
+                        style={{ cursor: "pointer" }}
+                        button
+                      >
+                        <TableCell align="left" hover role="checkbox">
+                          {voters}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
           </Paper>
         </Grid>
       </Container>

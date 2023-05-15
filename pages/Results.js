@@ -47,7 +47,7 @@ import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
-import ALert from "@mui/material/Alert";
+import Alert from "@mui/material/Alert";
 import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
 
@@ -137,8 +137,14 @@ export default function Vote() {
 
   const [optionCount, setOptionCount] = useState(0);
 
+  const [errorMessage2, setErrorMessage2] = useState("");
+
   const voteCount = async () => {
-    // function getVoteOptionVoteCount(bytes32 option) public view returns(uint)
+    if (!option) {
+      setErrorMessage2("No option selected");
+      return;
+    }
+    setErrorMessage2("");
     const ethersVote = new ethers.Contract(
       formAddress,
       Votingabi.abi,
@@ -162,6 +168,8 @@ export default function Vote() {
 
   const [winOptionCount, SetWinOptionCount] = useState(0);
 
+  const [errorMessage, setErrorMessage] = useState("");
+
   const winner = async () => {
     // function getVoteOptionVoteCount(bytes32 option) public view returns(uint)
     const ethersVote = new ethers.Contract(
@@ -169,12 +177,21 @@ export default function Vote() {
       Votingabi.abi,
       provider
     );
-    const Winner = await ethersVote.getElectionWinner();
-    const getCount = await ethersVote.getVoteOptionVoteCount(Winner);
+    try {
+      const Winner = await ethersVote.getElectionWinner();
+      const getCount = await ethersVote.getVoteOptionVoteCount(Winner);
 
-    const formatWinner = ethers.utils.parseBytes32String(Winner);
-    setWinOption(formatWinner);
-    SetWinOptionCount(getCount.toNumber());
+      const formatWinner = ethers.utils.parseBytes32String(Winner);
+      setWinOption(formatWinner);
+      SetWinOptionCount(getCount.toNumber());
+    } catch (error) {
+      if (error.message.includes("getVoteOptionVoteCount(bytes32)")) {
+        // (error.code === "CALL_EXCEPTION") {
+        setErrorMessage("No Winner Yet");
+        console.log(error.message);
+      }
+      console.log(error);
+    }
   };
 
   return (
@@ -258,6 +275,11 @@ export default function Vote() {
                 <Typography variant="h1" color="primary">
                   {winOption}
                 </Typography>
+                {errorMessage && (
+                  <Alert severity="error" sx={{ mt: 2 }}>
+                    {errorMessage}
+                  </Alert>
+                )}
                 <Typography variant="h9" color="primary">
                   with {winOptionCount} number of vote(s) !
                 </Typography>
@@ -283,20 +305,28 @@ export default function Vote() {
                   Vote Options
                 </Typography>
                 <br />
-                <Stack direction="row" spacing={5}>
-                  {viewOptions.map((option, index) => {
-                    const isOptionSelected = selectedOption === option;
-                    return (
-                      <ListItem key={index}>
-                        <Chip
-                          label={option}
-                          onClick={() => handleCount(option)}
-                          color={isOptionSelected ? "primary" : "default"}
-                        />
-                      </ListItem>
-                    );
-                  })}
-                </Stack>
+                <br />
+                {viewOptions.length === 0 ? (
+                  <Typography variant="h6" textAlign="left" color="grey">
+                    No Options Added
+                  </Typography>
+                ) : (
+                  <Stack direction="row" spacing={5}>
+                    {viewOptions.map((option, index) => {
+                      const isOptionSelected = selectedOption === option;
+                      return (
+                        <ListItem key={index}>
+                          <Chip
+                            label={option}
+                            onClick={() => handleCount(option)}
+                            color={isOptionSelected ? "primary" : "default"}
+                          />
+                        </ListItem>
+                      );
+                    })}
+                  </Stack>
+                )}
+
                 <br />
                 <Stack direction="row" spacing={10}>
                   <Button variant="outlined" onClick={voteCount}>
@@ -307,6 +337,11 @@ export default function Vote() {
                     {optionCount} Vote(s)!
                   </Typography>
                 </Stack>
+                {errorMessage2 && (
+                  <Alert severity="error" sx={{ mt: 2 }}>
+                    {errorMessage2}
+                  </Alert>
+                )}
               </Paper>
             </Grid>
           </Grid>

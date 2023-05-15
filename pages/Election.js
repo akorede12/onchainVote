@@ -252,24 +252,30 @@ export default function Vote() {
                   Voters
                 </Typography>
                 {/*Table*/}
-                <TableContainer component={Paper}>
-                  <Table aria-label="Voter Table">
-                    <TableBody>
-                      {allowedVoters.map((voters, index) => (
-                        <TableRow
-                          key={index}
-                          hover
-                          style={{ cursor: "pointer" }}
-                          button
-                        >
-                          <TableCell align="left" hover role="checkbox">
-                            {voters}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                {allowedVoters.length === 0 ? (
+                  <Typography variant="h6" textAlign="left" color="grey">
+                    No voters Added
+                  </Typography>
+                ) : (
+                  <TableContainer component={Paper}>
+                    <Table aria-label="Voter Table">
+                      <TableBody>
+                        {allowedVoters.map((voters, index) => (
+                          <TableRow
+                            key={index}
+                            hover
+                            style={{ cursor: "pointer" }}
+                            button
+                          >
+                            <TableCell align="left" hover role="checkbox">
+                              {voters}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
               </Paper>
             </Grid>
             <Grid item md={6}>
@@ -280,24 +286,30 @@ export default function Vote() {
                 </Typography>
 
                 {/*Table*/}
-                <TableContainer component={Paper}>
-                  <Table aria-label="Options Table">
-                    <TableBody>
-                      {viewOptions.map((option, index) => (
-                        <TableRow
-                          key={index}
-                          hover
-                          style={{ cursor: "pointer" }}
-                          button
-                        >
-                          <TableCell align="left" hover role="checkbox">
-                            {option}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                {viewOptions.length === 0 ? (
+                  <Typography variant="h6" textAlign="right" color="grey">
+                    No Options Added
+                  </Typography>
+                ) : (
+                  <TableContainer component={Paper}>
+                    <Table aria-label="Options Table">
+                      <TableBody>
+                        {viewOptions.map((option, index) => (
+                          <TableRow
+                            key={index}
+                            hover
+                            style={{ cursor: "pointer" }}
+                            button
+                          >
+                            <TableCell align="right" hover role="checkbox">
+                              {option}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
               </Paper>
             </Grid>
           </Grid>
