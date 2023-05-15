@@ -51,9 +51,10 @@ import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
-import ALert from "@mui/material/Alert";
+import Alert from "@mui/material/Alert";
 import Divider from "@mui/material/Divider";
 import ButtonGroup from "@mui/material/ButtonGroup";
+import Snackbar from "@mui/material/Snackbar";
 
 export default function ModifyVote() {
   // Modify Elections
@@ -80,17 +81,82 @@ export default function ModifyVote() {
 
   const provider = new ethers.providers.JsonRpcProvider();
 
+  // addVoter errors
+
+  const [inputVoterError, setInputVoterError] = useState("");
+
+  const [alreadyAddedError, setalreadyAddedError] = useState("");
+
+  // addVote option error
+
+  const [optionInputError, setOptionInputError] = useState("");
+
+  const [NopermitError2, setNoPermitError2] = useState("");
+
+  const [alreadyAddedError2, setAlreadyAddedError2] = useState("");
+  // create election success message
+  const [successMessage, setSuccessMessage] = useState("");
+
+  const [successMessage2, setSuccessMessage2] = useState("");
+
+  const [successMessage3, setSuccessMessage3] = useState("");
+
+  // create election success snackbar controls
+  const [open2, setOpen2] = useState(false);
+
+  const snackbarOpen2 = () => {
+    setOpen2(true);
+  };
+
+  const handleClose2 = (event, reason) => {
+    if (reason === "clickaway") {
+      return;
+    }
+
+    setOpen(false);
+  };
+
+  // addVoter success snackbar controls
+  const [open3, setOpen3] = useState(false);
+
+  const addVoterSnackbar = () => {
+    setOpen3(true);
+  };
+
+  const handleClose3 = (event, reason) => {
+    if (reason === "clickaway") {
+      return;
+    }
+
+    setOpen3(false);
+  };
+
+  // addOption success snackbar controls
+  const [open4, setOpen4] = useState(false);
+
+  const addOptionSnackbar = () => {
+    setOpen4(true);
+  };
+
+  const handleClose4 = (event, reason) => {
+    if (reason === "clickaway") {
+      return;
+    }
+
+    setOpen4(false);
+  };
+
   // create modify election
   async function modifyElection() {
+    // Reset error message if there was a previous one
+    setErrorMessage("");
+
     if (modElectionName.trim() === "") {
       setErrorMessage(
         "Election Name required!, Please input a name for the Eleaction"
       );
       return;
     }
-
-    // Reset error message if there was a previous one
-    setErrorMessage("");
 
     const formattedName = ethers.utils.formatBytes32String(modElectionName);
 
@@ -107,6 +173,8 @@ export default function ModifyVote() {
       await tx.wait();
       // Call the electionInfo function after transaction has been successful
       await electionInfo();
+      setSuccessMessage(`Election name is now ${modElectionName}`);
+      snackbarOpen2();
     } catch (error) {
       console.error(error);
       setErrorMessage("An error occurred while creating the election.");
@@ -127,6 +195,15 @@ export default function ModifyVote() {
   };
 
   const addVoters = async (e) => {
+    setalreadyAddedError("");
+    setErrorMessage2("");
+
+    if (voterChips.length === 0) {
+      setInputVoterError("Input Voters");
+      return;
+    }
+    setInputVoterError("");
+
     if (e) {
       e.preventDefault();
     }
@@ -142,10 +219,15 @@ export default function ModifyVote() {
       await tx.wait();
       // Call the viewVoters function after transaction has been successful
       await viewVoters();
+      setSuccessMessage2(`New voter(s) added.`);
+      addVoterSnackbar();
     } catch (error) {
       if (error.message.includes("Caller is not authorized.")) {
         setErrorMessage2("You do not have permission to add voters");
         console.log(error.message);
+      }
+      if (error.message.includes("Voter already registered")) {
+        setalreadyAddedError("This Voter(s) have already been registered");
       }
       console.error(error);
     }
@@ -159,6 +241,15 @@ export default function ModifyVote() {
   };
 
   async function uploadOptions(e) {
+    setAlreadyAddedError2("");
+    setNoPermitError2("");
+
+    if (optionChips.length === 0) {
+      setOptionInputError("Input Options");
+      return;
+    }
+    setOptionInputError("");
+
     e.preventDefault();
     const ethersVote = new ethers.Contract(
       votingContractAddress,
@@ -173,8 +264,17 @@ export default function ModifyVote() {
       const upload = await ethersVote.addVoteOptions(optionChipsToBytes);
       console.log(optionChipsToBytes);
       await viewVoteOptions();
+      setSuccessMessage3(`New option(s) added.`);
+      addOptionSnackbar();
     } catch (error) {
       console.error(error);
+      if (error.message.includes("Caller is not authorized.")) {
+        setNoPermitError2("You do not have permission to add options");
+      }
+      console.error(error);
+      if (error.message.includes("Option already exists.")) {
+        setAlreadyAddedError2("Vote option has already been added");
+      }
     }
   }
 
@@ -352,10 +452,23 @@ export default function ModifyVote() {
                     Change Election Name
                   </Button>
                   {errorMessage && (
-                    <ALert severity="error" sx={{ mt: 2 }}>
+                    <Alert severity="error" sx={{ mt: 2 }}>
                       {errorMessage}
-                    </ALert>
+                    </Alert>
                   )}
+                  <Snackbar
+                    open={open2}
+                    autoHideDuration={6000}
+                    onClose={handleClose2}
+                  >
+                    <Alert
+                      onClose={handleClose2}
+                      severity="success"
+                      sx={{ width: "100%" }}
+                    >
+                      {successMessage}
+                    </Alert>
+                  </Snackbar>
                 </form>
               </Paper>
               <br />
@@ -388,9 +501,32 @@ export default function ModifyVote() {
                   Upload Voters
                 </Button>
                 {errorMessage2 && (
-                  <ALert severity="error" sx={{ mt: 2 }}>
+                  <Alert severity="error" sx={{ mt: 2 }}>
                     {errorMessage2}
-                  </ALert>
+                  </Alert>
+                )}
+                <Snackbar
+                  open={open3}
+                  autoHideDuration={6000}
+                  onClose={handleClose3}
+                >
+                  <Alert
+                    onClose={handleClose3}
+                    severity="success"
+                    sx={{ width: "100%" }}
+                  >
+                    {successMessage2}
+                  </Alert>
+                </Snackbar>
+                {inputVoterError && (
+                  <Alert severity="error" sx={{ mt: 2 }}>
+                    {inputVoterError}
+                  </Alert>
+                )}
+                {alreadyAddedError && (
+                  <Alert severity="error" sx={{ mt: 2 }}>
+                    {alreadyAddedError}
+                  </Alert>
                 )}
                 <br />
                 <br />
@@ -433,6 +569,35 @@ export default function ModifyVote() {
                 <Button onClick={uploadOptions} variant="contained">
                   Upload Vote option
                 </Button>
+                <Snackbar
+                  open={open4}
+                  autoHideDuration={6000}
+                  onClose={handleClose4}
+                >
+                  <Alert
+                    onClose={handleClose4}
+                    severity="success"
+                    sx={{ width: "100%" }}
+                  >
+                    {successMessage3}
+                  </Alert>
+                </Snackbar>
+                {optionInputError && (
+                  <Alert severity="error" sx={{ mt: 2 }}>
+                    {optionInputError}
+                  </Alert>
+                )}
+                {NopermitError2 && (
+                  <Alert severity="error" sx={{ mt: 2 }}>
+                    {NopermitError2}
+                  </Alert>
+                )}
+                {alreadyAddedError2 && (
+                  <Alert severity="error" sx={{ mt: 2 }}>
+                    {alreadyAddedError2}
+                  </Alert>
+                )}
+
                 <br />
                 <br />
               </Paper>
