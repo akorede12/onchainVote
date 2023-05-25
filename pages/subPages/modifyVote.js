@@ -2,45 +2,17 @@ import Paper from "@mui/material/Paper";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
-import styles from "../styles/Home.module.css";
+import styles from "../../styles/Home.module.css";
 import { Box, CardContent, Grid } from "@mui/material";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemText from "@mui/material/ListItemText";
-import ListItemIcon from "@mui/material/ListItemIcon";
 import { useRouter } from "next/router";
-import HowToVoteIcon from "@mui/icons-material/HowToVote";
-import ViewListIcon from "@mui/icons-material/ViewList";
-import CreateNewFolderIcon from "@mui/icons-material/CreateNewFolder";
 import TextField from "@mui/material/TextField";
-import { useState, useEffect } from "react";
-import Radio from "@mui/material/Radio";
-import RadioGroup from "@mui/material/RadioGroup";
-import FormControl from "@mui/material/FormControl";
-import FormLabel from "@mui/material/FormLabel";
-import FormControlLabel from "@mui/material/FormControlLabel";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { MuiChipsInput } from "mui-chips-input";
 import Card from "@mui/material/Card";
-import Chip from "@mui/material/Chip";
-import Stack from "@mui/material/Stack";
 import Head from "next/head";
-import {
-  LastDeployedElection,
-  AllElections,
-  ViewElectionAddress,
-  GetElectionCount,
-} from "../components/elections";
 import { ethers } from "ethers";
-import { ElectionContract } from "../config";
-import Electionabi from "../artifacts/contracts/election.sol/Election.json";
-import Votingabi from "../artifacts/contracts/voting.sol/Voting.json";
-import {
-  useContract,
-  useContractWrite,
-  usePrepareContractWrite,
-  useAccount,
-  useSigner,
-} from "wagmi";
+import Votingabi from "../../artifacts/contracts/voting.sol/Voting.json";
+import { useAccount, useSigner } from "wagmi";
 import Stepper from "@mui/material/Stepper";
 import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
@@ -49,10 +21,8 @@ import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Alert from "@mui/material/Alert";
-import Divider from "@mui/material/Divider";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Snackbar from "@mui/material/Snackbar";
 
@@ -65,7 +35,12 @@ export default function ModifyVote() {
 
   const router = useRouter();
   const { Address } = router.query;
-  const formAddress = ethers.utils.getAddress(Address);
+  const formAddress = useMemo(() => {
+    if (Address) return ethers.utils.getAddress(Address);
+    else return null;
+  }, [Address]);
+
+  const provider = useRef(new ethers.providers.JsonRpcProvider());
   //
   const [errorMessage, setErrorMessage] = useState("");
   // error message for addVoters
@@ -78,8 +53,6 @@ export default function ModifyVote() {
   const { address } = useAccount();
 
   const [modElectionName, setModElectionName] = useState("");
-
-  const provider = new ethers.providers.JsonRpcProvider();
 
   // addVoter errors
 
@@ -94,12 +67,25 @@ export default function ModifyVote() {
   const [NopermitError2, setNoPermitError2] = useState("");
 
   const [alreadyAddedError2, setAlreadyAddedError2] = useState("");
+
   // create election success message
   const [successMessage, setSuccessMessage] = useState("");
 
   const [successMessage2, setSuccessMessage2] = useState("");
 
   const [successMessage3, setSuccessMessage3] = useState("");
+
+  const [voterChips, setVoterChips] = useState([]);
+
+  const [optionChips, setOptionChips] = useState([]);
+
+  const [electionCreator, setElectionCreator] = useState();
+
+  const [newElectionName, setNewElectionName] = useState("");
+
+  const [viewOptions, setViewOptions] = useState([]);
+
+  const [allowedVoters, setAllowedVoters] = useState([]);
 
   // create election success snackbar controls
   const [open2, setOpen2] = useState(false);
@@ -160,11 +146,7 @@ export default function ModifyVote() {
 
     const formattedName = ethers.utils.formatBytes32String(modElectionName);
 
-    const contract = new ethers.Contract(
-      votingContractAddress,
-      Votingabi.abi,
-      signer
-    );
+    const contract = new ethers.Contract(formAddress, Votingabi.abi, signer);
     console.log(modElectionName, formattedName);
     try {
       const tx = await contract.setElectionDetails(formattedName, {
@@ -188,8 +170,6 @@ export default function ModifyVote() {
 
   // Add voters
 
-  const [voterChips, setVoterChips] = useState([]);
-
   const handleChange = (voterChips) => {
     setVoterChips(voterChips);
   };
@@ -208,14 +188,10 @@ export default function ModifyVote() {
       e.preventDefault();
     }
     console.log(voterChips);
-    const ethersVote = new ethers.Contract(
-      votingContractAddress,
-      Votingabi.abi,
-      signer
-    );
+    const ethersVote = new ethers.Contract(formAddress, Votingabi.abi, signer);
 
     try {
-      const tx = await await ethersVote.registerVoter(voterChips);
+      const tx = await ethersVote.registerVoter(voterChips);
       await tx.wait();
       // Call the viewVoters function after transaction has been successful
       await viewVoters();
@@ -234,7 +210,6 @@ export default function ModifyVote() {
   };
 
   // Add vote options
-  const [optionChips, setOptionChips] = useState([]);
 
   const handleOptions = (optionChips) => {
     setOptionChips(optionChips);
@@ -251,11 +226,7 @@ export default function ModifyVote() {
     setOptionInputError("");
 
     e.preventDefault();
-    const ethersVote = new ethers.Contract(
-      votingContractAddress,
-      Votingabi.abi,
-      signer
-    );
+    const ethersVote = new ethers.Contract(formAddress, Votingabi.abi, signer);
     const optionChipsToBytes = optionChips.map((str) =>
       ethers.utils.formatBytes32String(str)
     );
@@ -280,68 +251,65 @@ export default function ModifyVote() {
 
   const handleNext = () => {
     router.push({
-      pathname: "/Election",
-      query: { Address: votingContractAddress },
+      pathname: "./Election",
+      query: { Address: formAddress },
     });
   };
 
   // Receive Address
-  const [electionCreator, setElectionCreator] = useState();
 
-  const [newElectionName, setNewElectionName] = useState("");
+  const electionInfo = useCallback(() => {
+    const fn = async () => {
+      const ethersVote = new ethers.Contract(
+        formAddress,
+        Votingabi.abi,
+        provider.current
+      );
 
-  const electionInfo = async () => {
-    // const address = await LastDeployedElection();
-
-    const provider = new ethers.providers.JsonRpcProvider();
-
-    // const ethersVote = new ethers.Contract(address, Votingabi.abi, provider);
-    const ethersVote = new ethers.Contract(
-      formAddress, //votingContractAddress,
-      Votingabi.abi,
-      provider
-    );
-
-    const details = await ethersVote.getElectionDetails(); // { name, creator}
-    console.log(details); // log the details object
-    const name = details[0];
-    const formatName = await ethers.utils.parseBytes32String(name);
-    console.log(name, formatName);
-    setNewElectionName(formatName.toString());
-    setElectionCreator(details[1]);
-  };
+      const details = await ethersVote.getElectionDetails(); // { name, creator}
+      console.log(details); // log the details object
+      const name = details[0];
+      const formatName = await ethers.utils.parseBytes32String(name);
+      console.log(name, formatName);
+      setNewElectionName(formatName.toString());
+      setElectionCreator(details[1]);
+    };
+    if (formAddress) fn();
+  }, [formAddress, provider]);
 
   // view vote options
-  const [viewOptions, setViewOptions] = useState([]);
 
-  async function viewVoteOptions() {
-    const provider = new ethers.providers.JsonRpcProvider();
-    const ethersVote = new ethers.Contract(
-      formAddress, //votingContractAddress,
-      Votingabi.abi,
-      provider
-    );
-    const voteOptions = await ethersVote.viewVoteOptions();
-    const formatetOptions = voteOptions.map((opt) =>
-      ethers.utils.parseBytes32String(opt)
-    );
+  const viewVoteOptions = useCallback(() => {
+    const fn = async () => {
+      const ethersVote = new ethers.Contract(
+        formAddress,
+        Votingabi.abi,
+        provider.current
+      );
+      const voteOptions = await ethersVote.viewVoteOptions();
+      const formatetOptions = voteOptions.map((opt) =>
+        ethers.utils.parseBytes32String(opt)
+      );
 
-    setViewOptions(formatetOptions);
-  }
+      setViewOptions(formatetOptions);
+    };
+    if (formAddress) fn();
+  }, [formAddress, provider]);
 
   // view voters
 
-  const [allowedVoters, setAllowedVoters] = useState([]);
-
-  const viewVoters = async () => {
-    const ethersVote = new ethers.Contract(
-      formAddress, //votingContractAddress,
-      Votingabi.abi,
-      provider
-    );
-    const getVoters = await ethersVote.viewVoters();
-    setAllowedVoters(getVoters);
-  };
+  const viewVoters = useCallback(() => {
+    const fn = async () => {
+      const ethersVote = new ethers.Contract(
+        formAddress,
+        Votingabi.abi,
+        provider.current
+      );
+      const getVoters = await ethersVote.viewVoters();
+      setAllowedVoters(getVoters);
+    };
+    if (formAddress) fn();
+  }, [formAddress, provider]);
 
   useEffect(() => {
     viewVoters();

@@ -29,6 +29,8 @@ import { ethers } from "ethers";
 import { ElectionContract } from "../config";
 import Electionabi from "../artifacts/contracts/election.sol/Election.json";
 import Votingabi from "../artifacts/contracts/voting.sol/Voting.json";
+// election page
+import Election from "./subPages/Election"; //  ../components/Election.js
 import {
   useContract,
   useContractWrite,
@@ -50,8 +52,10 @@ import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
+import Link from "next/link";
+// import Election from "../components/Election";
 
-export default function Elections() {
+export default function MyElections() {
   const [electionInfo, setElectionInfo] = useState([]);
   const [electionCount, setElectionCount] = useState(0);
 
@@ -100,7 +104,7 @@ export default function Elections() {
     console.log(address);
     try {
       router.push({
-        pathname: "/Election",
+        pathname: "./subPages/Election",
         query: { Address: address },
       });
     } catch (error) {

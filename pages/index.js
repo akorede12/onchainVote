@@ -56,6 +56,7 @@ import ButtonGroup from "@mui/material/ButtonGroup";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Snackbar from "@mui/material/Snackbar";
+import { alchemyProvider } from "wagmi/providers/alchemy";
 
 export default function Create() {
   const router = useRouter();
@@ -98,6 +99,8 @@ export default function Create() {
   const { data: signer } = useSigner();
 
   const provider = new ethers.providers.JsonRpcProvider();
+
+  // const polygonProvider = https://rpc-mumbai.matic.today;
 
   const { address } = useAccount();
 
@@ -161,6 +164,35 @@ export default function Create() {
     setOpen4(false);
   };
 
+  // Variables for testnet
+  const [testId, setTestId] = useState("");
+  const [EName, setEname] = useState("");
+  const [eCreator, setECreator] = useState("");
+  const [eAddress, setEAddress] = useState("");
+
+  // Use myElection function to get the last election created by this user.
+  // get details of latest election details
+  const latestElection = async () => {
+    const contract = new ethers.Contract(
+      ElectionContract,
+      Electionabi.abi,
+      signer
+    );
+    const details = await contract.myElections({ from: address });
+    const myCreatedElections = details[0];
+    const election = myCreatedElections[myCreatedElections.length - 1];
+    const Id = election.electionId.toNumber();
+    const Name = ethers.utils.parseBytes32String(election.electioName);
+    const Creator = election.electionCreator;
+    const EAddress = election.electionAddress;
+
+    setTestId(Id);
+    setEname(Name);
+    setECreator(Creator);
+    setEAddress(EAddress);
+    console.log(election);
+  };
+
   // create  a new election
   async function createNewElection() {
     // If the User typed in an election name
@@ -186,24 +218,34 @@ export default function Create() {
       const tx = await contract.createElection(formattedName, {
         from: address,
       });
-      const rc = await tx.wait();
-      const event = rc.events.find(
-        (event) => event.event === "newElectionCreated"
-      );
-      const [count, name, creator, address2] = event.args;
-      console.log(count.toNumber(), name, creator, address2);
-      setVotingContractAddress(ethers.utils.getAddress(address2));
-      setNewElectionName(ethers.utils.parseBytes32String(name));
-      setElectionCreator(creator);
+
+      await tx;
+
+      latestElection();
+
+      // Read Event data
+      // contract.on("newElectionCreated", (count, name, creator, address2) => {
+      //   setVotingContractAddress(ethers.utils.getAddress(address2));
+      //   setNewElectionName(ethers.utils.parseBytes32String(name));
+      //   setElectionCreator(creator);
+      //   console.log(count.toNumber(), name, creator, address2);
+      // });
+      // const rc = await tx.wait();
+      // const event = rc.events.find(
+      //   (event) => event.event === "newElectionCreated"
+      // );
+      // const [count, name, creator, address2] = event.args;
+      // console.log(count.toNumber(), name, creator, address2);
+
       setSuccessMessage(
         `New ${ethers.utils.parseBytes32String(
-          name
+          EName //name
         )} election created, add voters and options in the next screens`
       );
       snackbarOpen2();
     } catch (error) {
       console.error(error);
-      setCreateError("An error occurred while creating the election.");
+      // setCreateError("An error occurred while creating the election.");
     }
   }
 
@@ -241,7 +283,6 @@ export default function Create() {
       e.preventDefault();
     }
     console.log(voterChips);
-    // const address = await LastDeployedElection();
 
     const ethersVote = new ethers.Contract(
       votingContractAddress,
@@ -276,7 +317,7 @@ export default function Create() {
     const ethersVote = new ethers.Contract(
       votingContractAddress,
       Votingabi.abi,
-      provider
+      provider // alchemyProvider
     );
     const getVoters = await ethersVote.viewVoters();
     setAllowedVoters(getVoters);
@@ -337,12 +378,10 @@ export default function Create() {
   const [viewOptions, setViewOptions] = useState([]);
 
   async function viewVoteOptions() {
-    // const address = await LastDeployedElection();
-    const provider = new ethers.providers.JsonRpcProvider();
     const ethersVote = new ethers.Contract(
       votingContractAddress,
       Votingabi.abi,
-      provider
+      provider // alchemyProvider
     );
     const voteOptions = await ethersVote.viewVoteOptions();
     const formatetOptions = voteOptions.map((opt) =>
@@ -366,8 +405,9 @@ export default function Create() {
       // Reset error message if there was a previous one
       setErrorMessage("");
       router.push({
-        pathname: "/Election",
-        query: { Address: votingContractAddress },
+        pathname: "../components/Election.js",
+        query: { Address: eAddress },
+        // query: { Address: votingContractAddress },
       });
     } catch (error) {
       console.error(error);
@@ -414,7 +454,8 @@ export default function Create() {
                   >
                     Election Name:
                   </Typography>
-                  <Typography>{newElectionName}</Typography>
+                  <Typography>{EName}</Typography>
+                  {/* <Typography>{newElectionName}</Typography> */}
                 </CardContent>
               </Card>
             </Grid>
@@ -429,9 +470,10 @@ export default function Create() {
                   >
                     Election Address:
                   </Typography>
-                  <Typography sx={{ fontSize: 14 }}>
-                    {votingContractAddress}
-                  </Typography>
+                  {/* <Typography sx={{ fontSize: 14 }}>
+                    {votingContractAddress} 
+                  </Typography> */}
+                  <Typography sx={{ fontSize: 14 }}>{eAddress}</Typography>
                 </CardContent>
               </Card>
             </Grid>
@@ -446,9 +488,10 @@ export default function Create() {
                   >
                     Election Creator:
                   </Typography>
-                  <Typography sx={{ fontSize: 14 }}>
+                  {/* <Typography sx={{ fontSize: 14 }}>
                     {electionCreator}
-                  </Typography>
+                  </Typography> */}
+                  <Typography sx={{ fontSize: 14 }}>{eCreator}</Typography>
                 </CardContent>
               </Card>
             </Grid>

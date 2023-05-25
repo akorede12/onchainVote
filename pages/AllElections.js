@@ -1,61 +1,20 @@
 import Paper from "@mui/material/Paper";
-import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
 import styles from "../styles/Home.module.css";
-import { CardContent } from "@mui/material";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemText from "@mui/material/ListItemText";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemButton from "@mui/material/ListItemButton";
 import { useRouter } from "next/router";
-import HowToVoteIcon from "@mui/icons-material/HowToVote";
-import ViewListIcon from "@mui/icons-material/ViewList";
-import CreateNewFolderIcon from "@mui/icons-material/CreateNewFolder";
-import TextField from "@mui/material/TextField";
 import { useState, useEffect } from "react";
-import Radio from "@mui/material/Radio";
-import RadioGroup from "@mui/material/RadioGroup";
-import FormControl from "@mui/material/FormControl";
-import FormLabel from "@mui/material/FormLabel";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import { MuiChipsInput } from "mui-chips-input";
-import Card from "@mui/material/Card";
-import Chip from "@mui/material/Chip";
-import Stack from "@mui/material/Stack";
 import Head from "next/head";
 import { ethers } from "ethers";
 import { ElectionContract } from "../config";
 import Electionabi from "../artifacts/contracts/election.sol/Election.json";
-import Votingabi from "../artifacts/contracts/voting.sol/Voting.json";
-import {
-  useContract,
-  useContractWrite,
-  usePrepareContractWrite,
-  useAccount,
-  useSigner,
-} from "wagmi";
-
-import {
-  LastDeployedElection,
-  AllElections,
-  ViewElectionAddress,
-  GetElectionCount,
-} from "../components/elections";
-
 // Mui Table imports
-import Box from "@mui/material/Box";
-import Collapse from "@mui/material/Collapse";
-import IconButton from "@mui/material/IconButton";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 
 export default function Elections() {
   const router = useRouter();
@@ -98,7 +57,7 @@ export default function Elections() {
     console.log(address);
     try {
       router.push({
-        pathname: "/Election",
+        pathname: "./subPages/Election",
         query: { Address: address },
       });
     } catch (error) {
@@ -138,9 +97,8 @@ export default function Elections() {
                       handleNext(election.Address);
                     }}
                     style={{ cursor: "pointer" }}
-                    button
                   >
-                    <TableCell align="right" hover role="checkbox">
+                    <TableCell align="right" role="checkbox">
                       {election.ElectionId}
                     </TableCell>
                     <TableCell align="right">{election.ElectionName}</TableCell>

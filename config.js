@@ -1,3 +1,3 @@
 
-  export const ElectionContract = "0x580252E7b3fAb86d8d26Cdf9e7F7F0fCe45C7DF7"
+  export const ElectionContract = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
   
