@@ -1,6 +1,6 @@
-# Next.js Dapp for Interacting with Smart Contract
+# This is a web3 Dapp that allows for easy voting on the blcokchain
 
-This is a Next.js dapp that allows users to interact with a smart contract deployed on the Ethereum blockchain.
+It is a Next.js dapp that allows users to interact with an EVM Election/Voting smart contract deployed on the blockchain.
 
 ## Requirements
 
