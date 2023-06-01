@@ -1,4 +1,4 @@
-# OnChaim Votes: Secure and Transparent Voting Made Easy
+# OnChain Votes: Secure and Transparent Voting Made Easy
 
 Experience the future of voting with OnChain Votes. My Next.js dapp that interacts with an EVM Election/Voting smart contract to enable seamless and secure elections. Create elections, add voters, define vote options, and cast votes effortlessly. Gain access to election details, allowed voters, and comprehensive reports on voter participation and choices. With OnChain Votes, you can trust in the integrity of your elections, thanks to a built-in "checker" library that validates vote options. 
 
